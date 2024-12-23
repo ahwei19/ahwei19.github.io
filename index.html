@@ -73,6 +73,16 @@
         button:hover {
             background-color: #7CCD7C;
         }
+        #customer-form {
+            margin-top: 2rem;
+            border-top: 2px solid #90EE90;
+            padding-top: 1rem;
+        }
+        #customer-form input {
+            margin-bottom: 1rem;
+            padding: 0.5rem;
+            width: 100%;
+        }
     </style>
 </head>
 <body>
@@ -86,7 +96,13 @@
             <h3>Shopping Cart</h3>
             <ul id="cart-items"></ul>
             <p>Total: $<span id="cart-total">0.00</span></p>
-            <button onclick="exportToSheet()">Export Order</button>
+        </div>
+        <div id="customer-form">
+            <h3>Customer Information</h3>
+            <input type="text" id="customer-name" placeholder="Full Name" required>
+            <input type="tel" id="customer-phone" placeholder="Phone Number" required>
+            <input type="email" id="customer-email" placeholder="Email Address" required>
+            <button onclick="placeOrder()">Place Order</button>
         </div>
         <h2>Contact Us</h2>
         <p>Phone: 510-555-5555</p>
@@ -152,20 +168,48 @@
             cartTotal.textContent = total.toFixed(2);
         }
 
-        function exportToSheet() {
+        function placeOrder() {
+            const name = document.getElementById('customer-name').value;
+            const phone = document.getElementById('customer-phone').value;
+            const email = document.getElementById('customer-email').value;
+
+            if (!name || !phone || !email || cart.length === 0) {
+                alert('Please fill in all customer information and add items to your cart.');
+                return;
+            }
+
+            const lastName = name.split(' ').pop();
+            const currentDate = new Date().toISOString().split('T')[0];
+            const fileName = `${lastName}_${currentDate}.csv`;
+
             let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += "Customer Name,Phone,Email\n";
+            csvContent += `${name},${phone},${email}\n\n`;
             csvContent += "Product,Quantity,Price,Total\n";
+            
+            let grandTotal = 0;
             cart.forEach(item => {
                 const itemTotal = item.price * item.quantity;
+                grandTotal += itemTotal;
                 csvContent += `${item.name},${item.quantity},${item.price.toFixed(2)},${itemTotal.toFixed(2)}\n`;
             });
+            
+            csvContent += `\nGrand Total,,,${grandTotal.toFixed(2)}`;
+
             const encodedUri = encodeURI(csvContent);
             const link = document.createElement("a");
             link.setAttribute("href", encodedUri);
-            link.setAttribute("download", "Ruby's_Vegetables_Order.csv");
+            link.setAttribute("download", fileName);
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
+
+            alert('Order placed successfully! Thank you for your purchase.');
+            cart = [];
+            updateCart();
+            document.getElementById('customer-name').value = '';
+            document.getElementById('customer-phone').value = '';
+            document.getElementById('customer-email').value = '';
         }
     </script>
 </body>
